@@ -146,7 +146,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionId = req.sessionID || crypto.randomUUID();
       const userAgent = req.headers['user-agent'] || '';
       const { browser, os } = parseUserAgent(userAgent);
-      const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+      // Get real IP address considering proxies
+      let ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+                     req.headers['x-real-ip'] || 
+                     req.ip || 
+                     req.connection.remoteAddress || 
+                     req.socket.remoteAddress ||
+                     'unknown';
+      
+      // Clean up IPv6 loopback and map to IPv4
+      if (ipAddress === '::1' || ipAddress === '::ffff:127.0.0.1') {
+        ipAddress = '127.0.0.1';
+      }
+      // Remove IPv6 mapping prefix if present
+      if (ipAddress.startsWith('::ffff:')) {
+        ipAddress = ipAddress.substring(7);
+      }
 
       await storage.createUserSession({
         userId: user.id,
