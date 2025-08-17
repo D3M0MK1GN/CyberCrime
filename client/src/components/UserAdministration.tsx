@@ -61,21 +61,37 @@ export function UserAdministration() {
   // Fetch users
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["/api/users"],
-    queryFn: () => apiRequest("/api/users")
+    queryFn: async () => {
+      const response = await fetch("/api/users");
+      if (!response.ok) throw new Error("Failed to fetch users");
+      return response.json();
+    }
   });
 
   // Fetch sessions
   const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
     queryKey: ["/api/sessions"],
-    queryFn: () => apiRequest("/api/sessions")
+    queryFn: async () => {
+      const response = await fetch("/api/sessions");
+      if (!response.ok) throw new Error("Failed to fetch sessions");
+      return response.json();
+    }
   });
 
   // Create user mutation
   const createUserMutation = useMutation({
-    mutationFn: (userData: typeof formData) => apiRequest("/api/users", {
-      method: "POST",
-      body: JSON.stringify(userData),
-    }),
+    mutationFn: async (userData: typeof formData) => {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create user");
+      }
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setIsDialogOpen(false);
@@ -96,11 +112,18 @@ export function UserAdministration() {
 
   // Update user mutation
   const updateUserMutation = useMutation({
-    mutationFn: ({ id, userData }: { id: string; userData: Partial<typeof formData> }) =>
-      apiRequest(`/api/users/${id}`, {
+    mutationFn: async ({ id, userData }: { id: string; userData: Partial<typeof formData> }) => {
+      const response = await fetch(`/api/users/${id}`, {
         method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
-      }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update user");
+      }
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setIsDialogOpen(false);
@@ -121,7 +144,13 @@ export function UserAdministration() {
 
   // Delete user mutation
   const deleteUserMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/users/${id}`, { method: "DELETE" }),
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/users/${id}`, { method: "DELETE" });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete user");
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
@@ -201,11 +230,13 @@ export function UserAdministration() {
     }
 
     if (editingUser) {
-      const updateData = { ...formData };
+      const updateData: Partial<typeof formData> = { ...formData };
       if (!updateData.password) {
-        delete updateData.password; // Don't update password if empty
+        const { password, ...dataWithoutPassword } = updateData;
+        updateUserMutation.mutate({ id: editingUser.id, userData: dataWithoutPassword });
+      } else {
+        updateUserMutation.mutate({ id: editingUser.id, userData: updateData });
       }
-      updateUserMutation.mutate({ id: editingUser.id, userData: updateData });
     } else {
       createUserMutation.mutate(formData);
     }

@@ -60,29 +60,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   }));
 
-  // Initialize admin user if not exists
-  async function initializeAdminUser() {
+  // Initialize default users if not exist
+  async function initializeDefaultUsers() {
     try {
-      const adminUser = await storage.getUserByUsername("admin");
-      if (!adminUser) {
-        await storage.createUser({
+      const defaultUsers = [
+        {
           username: "admin",
           email: "admin@cybercrime.com",
-          password: hashPassword("admin123"),
+          password: "admin123",
           firstName: "Administrador",
           lastName: "Sistema",
-          role: "admin",
-          isActive: "true"
-        });
-        console.log("Admin user created successfully");
+          role: "admin" as const,
+          isActive: "true" as const
+        },
+        {
+          username: "maria.gonzalez",
+          email: "maria.gonzalez@cybercrime.com",
+          password: "investigador123",
+          firstName: "María",
+          lastName: "González",
+          role: "investigator" as const,
+          isActive: "true" as const
+        },
+        {
+          username: "carlos.rodriguez",
+          email: "carlos.rodriguez@cybercrime.com", 
+          password: "analista123",
+          firstName: "Carlos",
+          lastName: "Rodríguez",
+          role: "user" as const,
+          isActive: "true" as const
+        },
+        {
+          username: "ana.martinez",
+          email: "ana.martinez@cybercrime.com",
+          password: "auditor123", 
+          firstName: "Ana",
+          lastName: "Martínez",
+          role: "auditor" as const,
+          isActive: "true" as const
+        },
+        {
+          username: "jose.lopez",
+          email: "jose.lopez@cybercrime.com",
+          password: "investigador123",
+          firstName: "José",
+          lastName: "López", 
+          role: "investigator" as const,
+          isActive: "false" as const
+        }
+      ];
+
+      for (const userData of defaultUsers) {
+        const existingUser = await storage.getUserByUsername(userData.username);
+        if (!existingUser) {
+          await storage.createUser({
+            ...userData,
+            password: hashPassword(userData.password)
+          });
+          console.log(`Usuario ${userData.username} creado exitosamente`);
+        }
       }
     } catch (error) {
-      console.error("Error creating admin user:", error);
+      console.error("Error creating default users:", error);
     }
   }
 
-  // Initialize admin user
-  await initializeAdminUser();
+  // Initialize default users
+  await initializeDefaultUsers();
 
   // Login route with session tracking
   app.post('/api/login', async (req: any, res) => {
