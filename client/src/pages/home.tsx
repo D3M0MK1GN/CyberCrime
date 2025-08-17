@@ -6,12 +6,16 @@ import { Settings } from "@/components/Settings";
 import { Chatbot } from "@/pages/chatbot";
 import { Intelligence } from "@/pages/intelligence";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const [currentSection, setCurrentSection] = useState("dashboard");
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  
+  // Load user theme settings when authenticated
+  useTheme();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
