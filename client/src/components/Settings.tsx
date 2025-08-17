@@ -1,0 +1,295 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Save, RotateCcw, Palette, Monitor, Shield } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface ThemeSettings {
+  primaryColor: string;
+  transparency: number;
+  neonEffects: boolean;
+  fontSize: number;
+  animations: boolean;
+}
+
+const colorOptions = [
+  { value: "green", label: "VERDE MATRIX", color: "hsl(120, 100%, 45%)" },
+  { value: "blue", label: "AZUL CIBERNÉTICO", color: "hsl(200, 100%, 45%)" },
+  { value: "purple", label: "PÚRPURA TECH", color: "hsl(280, 100%, 45%)" },
+  { value: "red", label: "ROJO ALERT", color: "hsl(0, 100%, 45%)" },
+  { value: "orange", label: "NARANJA HACK", color: "hsl(30, 100%, 45%)" },
+];
+
+export function Settings() {
+  const { toast } = useToast();
+  const [settings, setSettings] = useState<ThemeSettings>({
+    primaryColor: "green",
+    transparency: 85,
+    neonEffects: true,
+    fontSize: 14,
+    animations: true,
+  });
+
+  // Load settings from localStorage
+  useEffect(() => {
+    const savedSettings = localStorage.getItem("cyber-theme-settings");
+    if (savedSettings) {
+      setSettings(JSON.parse(savedSettings));
+    }
+  }, []);
+
+  // Apply theme changes to CSS variables
+  useEffect(() => {
+    const root = document.documentElement;
+    
+    // Color mappings - manteniendo los efectos originales
+    const colorMap: Record<string, { primary: string; primaryForeground: string; accent: string }> = {
+      green: { primary: "120 100% 45%", primaryForeground: "0 0% 0%", accent: "120 100% 50%" },
+      blue: { primary: "200 100% 45%", primaryForeground: "0 0% 0%", accent: "200 100% 50%" },
+      purple: { primary: "280 100% 45%", primaryForeground: "0 0% 0%", accent: "280 100% 50%" },
+      red: { primary: "0 100% 45%", primaryForeground: "0 0% 0%", accent: "0 100% 50%" },
+      orange: { primary: "30 100% 45%", primaryForeground: "0 0% 0%", accent: "30 100% 50%" },
+    };
+
+    const colors = colorMap[settings.primaryColor];
+    
+    // Apply colors
+    root.style.setProperty("--primary", `hsl(${colors.primary})`);
+    root.style.setProperty("--primary-foreground", `hsl(${colors.primaryForeground})`);
+    root.style.setProperty("--accent", `hsl(${colors.accent})`);
+    
+    // Apply transparency variables
+    root.style.setProperty("--card-opacity", (settings.transparency / 100).toString());
+    root.style.setProperty("--modal-opacity", (settings.transparency / 100).toString());
+    
+    // Apply font size
+    root.style.fontSize = `${settings.fontSize}px`;
+    
+    // Apply neon effects class
+    if (settings.neonEffects) {
+      root.classList.add("neon-enabled");
+    } else {
+      root.classList.remove("neon-enabled");
+    }
+    
+    // Apply animations class
+    if (settings.animations) {
+      root.classList.add("animations-enabled");
+    } else {
+      root.classList.remove("animations-enabled");
+    }
+  }, [settings]);
+
+  const handleSave = () => {
+    localStorage.setItem("cyber-theme-settings", JSON.stringify(settings));
+    toast({
+      title: "CONFIGURACIÓN GUARDADA",
+      description: "Los cambios se han aplicado exitosamente",
+    });
+  };
+
+  const handleReset = () => {
+    const defaultSettings: ThemeSettings = {
+      primaryColor: "green",
+      transparency: 85,
+      neonEffects: true,
+      fontSize: 14,
+      animations: true,
+    };
+    setSettings(defaultSettings);
+    localStorage.removeItem("cyber-theme-settings");
+    toast({
+      title: "CONFIGURACIÓN RESTABLECIDA",
+      description: "Se han restaurado los valores por defecto",
+    });
+  };
+
+  const updateSetting = <K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  return (
+    <div className="p-6 bg-background min-h-screen">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold matrix-text mb-2">[ CONFIGURACIÓN DEL SISTEMA ]</h1>
+        <p className="text-muted-foreground font-mono">Personaliza la apariencia y comportamiento del sistema</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Theme Settings */}
+        <Card className="neon-border theme-card">
+          <CardHeader>
+            <CardTitle className="matrix-text font-mono flex items-center gap-2">
+              <Palette className="w-5 h-5" />
+              [ CONFIGURACIÓN VISUAL ]
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Primary Color */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium font-mono">COLOR PRIMARIO</Label>
+              <Select value={settings.primaryColor} onValueChange={(value) => updateSetting("primaryColor", value)}>
+                <SelectTrigger className="neon-border font-mono">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {colorOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value} className="font-mono">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-4 h-4 rounded border border-border" 
+                          style={{ backgroundColor: option.color }}
+                        />
+                        {option.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Separator />
+
+            {/* Transparency */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium font-mono">
+                OPACIDAD DE COMPONENTES: {settings.transparency}%
+              </Label>
+              <Slider
+                value={[settings.transparency]}
+                onValueChange={(value) => updateSetting("transparency", value[0])}
+                max={100}
+                min={50}
+                step={5}
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground font-mono">
+                Controla la transparencia de los paneles y modales
+              </p>
+            </div>
+
+            <Separator />
+
+            {/* Font Size */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium font-mono">
+                TAMAÑO DE FUENTE: {settings.fontSize}px
+              </Label>
+              <Slider
+                value={[settings.fontSize]}
+                onValueChange={(value) => updateSetting("fontSize", value[0])}
+                max={18}
+                min={12}
+                step={1}
+                className="w-full"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Effects Settings */}
+        <Card className="neon-border theme-card">
+          <CardHeader>
+            <CardTitle className="matrix-text font-mono flex items-center gap-2">
+              <Monitor className="w-5 h-5" />
+              [ EFECTOS Y COMPORTAMIENTO ]
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Neon Effects */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium font-mono">EFECTOS NEÓN</Label>
+                <p className="text-xs text-muted-foreground font-mono">
+                  Bordes y resplandores cibernéticos
+                </p>
+              </div>
+              <Switch
+                checked={settings.neonEffects}
+                onCheckedChange={(checked) => updateSetting("neonEffects", checked)}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Animations */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium font-mono">ANIMACIONES</Label>
+                <p className="text-xs text-muted-foreground font-mono">
+                  Transiciones y efectos animados
+                </p>
+              </div>
+              <Switch
+                checked={settings.animations}
+                onCheckedChange={(checked) => updateSetting("animations", checked)}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Preview */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium font-mono">VISTA PREVIA</Label>
+              <div className="p-4 border border-border rounded-lg bg-card/30">
+                <div className="flex items-center gap-3 mb-3">
+                  <Shield className="w-6 h-6 text-primary" />
+                  <span className="font-mono text-primary">CYBER-CRIME SYSTEM</span>
+                </div>
+                <div className="text-sm text-muted-foreground font-mono">
+                  Este es un ejemplo de cómo se ve el tema actual
+                </div>
+                <Button size="sm" className="mt-3 neon-border font-mono">
+                  BOTÓN DE PRUEBA
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* System Info */}
+        <Card className="neon-border theme-card lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="matrix-text font-mono flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              [ INFORMACIÓN DEL SISTEMA ]
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm font-mono">
+              <div>
+                <p className="text-muted-foreground">VERSIÓN:</p>
+                <p className="text-foreground">CYBER-CRIME v2.1.0</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">ÚLTIMA ACTUALIZACIÓN:</p>
+                <p className="text-foreground">16 AGO 2025</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">ESTADO:</p>
+                <p className="text-primary">OPERATIVO</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-4 mt-8">
+        <Button onClick={handleSave} className="neon-border font-mono">
+          <Save className="w-4 h-4 mr-2" />
+          GUARDAR CONFIGURACIÓN
+        </Button>
+        <Button onClick={handleReset} variant="outline" className="neon-border font-mono">
+          <RotateCcw className="w-4 h-4 mr-2" />
+          RESTABLECER
+        </Button>
+      </div>
+    </div>
+  );
+}

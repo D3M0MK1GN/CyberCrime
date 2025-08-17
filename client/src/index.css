@@ -1,0 +1,213 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Hacker Dark Theme - Base colors */
+    --background: 0 0% 3%;
+    --foreground: 120 100% 75%;
+    --card: 0 0% 5%;
+    --card-foreground: 120 100% 90%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 120 100% 90%;
+    --primary: 120 100% 45%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 8%;
+    --secondary-foreground: 120 100% 90%;
+    --muted: 0 0% 7%;
+    --muted-foreground: 120 30% 65%;
+    --accent: 60 100% 45%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 12%;
+    --input: 0 0% 8%;
+    --ring: 120 100% 45%;
+    --chart-1: 120 100% 45%;
+    --chart-2: 180 100% 45%;
+    --chart-3: 60 100% 45%;
+    --chart-4: 300 100% 45%;
+    --chart-5: 0 100% 45%;
+    --radius: 0.5rem;
+    --card-opacity: 0.85;
+    --modal-opacity: 0.95;
+    --base-font-size: 14px;
+  }
+
+  .dark {
+    /* Enhanced dark mode for hacker theme */
+    --background: 0 0% 2%;
+    --foreground: 120 100% 80%;
+    --card: 0 0% 4%;
+    --card-foreground: 120 100% 95%;
+    --popover: 0 0% 4%;
+    --popover-foreground: 120 100% 95%;
+    --primary: 120 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 6%;
+    --secondary-foreground: 120 100% 95%;
+    --muted: 0 0% 5%;
+    --muted-foreground: 120 35% 70%;
+    --accent: 60 100% 50%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 85% 65%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 10%;
+    --input: 0 0% 6%;
+    --ring: 120 100% 50%;
+    --chart-1: 120 100% 50%;
+    --chart-2: 180 100% 50%;
+    --chart-3: 60 100% 50%;
+    --chart-4: 300 100% 50%;
+    --chart-5: 0 100% 50%;
+    --card-opacity: 0.90;
+    --modal-opacity: 0.98;
+  }
+
+  /* Global hacker-style typography */
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', 'Monaco', 'Menlo', 'Consolas', monospace;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* Enable effects by default */
+  html {
+    @apply neon-enabled animations-enabled;
+  }
+
+  /* Matrix-style text effects */
+  .matrix-text {
+    color: hsl(120 100% 50%);
+    text-shadow: 0 0 5px hsl(120 100% 50% / 0.5);
+  }
+
+  .neon-border {
+    border: 1px solid hsl(120 100% 50% / 0.3);
+    box-shadow: 0 0 10px hsl(120 100% 50% / 0.2);
+  }
+
+  /* Cyberpunk scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: hsl(120 100% 30%);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(120 100% 40%);
+  }
+
+  /* Custom hacker table styles */
+  .hacker-table {
+    background: hsl(0 0% 4%);
+    border: 1px solid hsl(120 100% 25% / 0.3);
+  }
+  
+  .hacker-table th {
+    background: hsl(0 0% 6%);
+    color: hsl(120 100% 70%);
+    border-bottom: 1px solid hsl(120 100% 25% / 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .hacker-table tr:hover {
+    background: hsl(120 100% 50% / 0.05);
+    border-left: 2px solid hsl(120 100% 50%);
+  }
+
+  /* Neon glow effects for interactive elements */
+  .neon-button {
+    background: hsl(0 0% 8%);
+    border: 1px solid hsl(120 100% 40%);
+    color: hsl(120 100% 70%);
+    transition: all 0.3s ease;
+  }
+  
+  .neon-button:hover {
+    background: hsl(120 100% 50% / 0.1);
+    box-shadow: 0 0 15px hsl(120 100% 50% / 0.3);
+    border-color: hsl(120 100% 60%);
+  }
+
+  /* Terminal-style input fields */
+  .terminal-input {
+    background: hsl(0 0% 6%);
+    border: 1px solid hsl(120 100% 30%);
+    color: hsl(120 100% 85%);
+    font-family: inherit;
+  }
+  
+  .terminal-input:focus {
+    border-color: hsl(120 100% 50%);
+    box-shadow: 0 0 10px hsl(120 100% 50% / 0.2);
+  }
+
+  .terminal-input::placeholder {
+    color: hsl(120 30% 50%);
+  }
+
+  /* Custom badge styles for cybercrime types */
+  .badge-hacking { background: hsl(0 80% 25%); color: hsl(0 100% 85%); }
+  .badge-phishing { background: hsl(30 80% 25%); color: hsl(30 100% 85%); }
+  .badge-malware { background: hsl(270 80% 25%); color: hsl(270 100% 85%); }
+  .badge-ransomware { background: hsl(0 0% 25%); color: hsl(0 0% 85%); }
+  .badge-fraud { background: hsl(210 80% 25%); color: hsl(210 100% 85%); }
+  .badge-identity { background: hsl(60 80% 25%); color: hsl(60 100% 15%); }
+  .badge-harassment { background: hsl(320 80% 25%); color: hsl(320 100% 85%); }
+  .badge-impersonation { background: hsl(240 80% 25%); color: hsl(240 100% 85%); }
+
+  .badge-pending { background: hsl(60 80% 25%); color: hsl(60 100% 15%); }
+  .badge-processing { background: hsl(210 80% 25%); color: hsl(210 100% 85%); }
+  .badge-completed { background: hsl(120 80% 25%); color: hsl(120 100% 85%); }
+  .badge-no-response { background: hsl(0 80% 25%); color: hsl(0 100% 85%); }
+  .badge-rejected { background: hsl(0 0% 25%); color: hsl(0 0% 85%); }
+
+  /* Dynamic transparency system */
+  .theme-card {
+    background: hsl(var(--card) / var(--card-opacity, 0.85));
+  }
+  
+  .theme-modal {
+    background: hsl(var(--card) / var(--modal-opacity, 0.95)) !important;
+    backdrop-filter: blur(8px);
+  }
+
+  /* Neon effects toggle */
+  .neon-enabled .matrix-text {
+    animation: matrix-glow 2s ease-in-out infinite alternate;
+  }
+  
+  .neon-enabled .neon-border {
+    animation: neon-pulse 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes matrix-glow {
+    from { text-shadow: 0 0 5px hsl(120 100% 50% / 0.5); }
+    to { text-shadow: 0 0 15px hsl(120 100% 50% / 0.8); }
+  }
+
+  @keyframes neon-pulse {
+    from { box-shadow: 0 0 10px hsl(120 100% 50% / 0.2); }
+    to { box-shadow: 0 0 20px hsl(120 100% 50% / 0.4); }
+  }
+
+  /* Animation toggle */
+  .animations-enabled * {
+    transition: all 0.3s ease;
+  }
+}
