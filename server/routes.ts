@@ -255,6 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!settings) {
         const defaultSettings = {
           primaryColor: "green",
+          secondaryColor: "gray",
           transparency: "85",
           neonEffects: "false",
           fontSize: "14",
@@ -264,6 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.json({
           primaryColor: settings.primaryColor,
+          secondaryColor: settings.secondaryColor || "gray",
           transparency: settings.transparency,
           neonEffects: settings.neonEffects,
           fontSize: settings.fontSize,
@@ -279,10 +281,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/user/settings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId || "admin";
-      const { primaryColor, transparency, neonEffects, fontSize, animations } = req.body;
+      const { primaryColor, secondaryColor, transparency, neonEffects, fontSize, animations } = req.body;
       
       const settings = await storage.upsertUserSettings(userId, {
         primaryColor: primaryColor || "green",
+        secondaryColor: secondaryColor || "gray",
         transparency: transparency?.toString() || "85",
         neonEffects: neonEffects?.toString() || "false",
         fontSize: fontSize?.toString() || "14",
@@ -291,6 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({
         primaryColor: settings.primaryColor,
+        secondaryColor: settings.secondaryColor,
         transparency: settings.transparency,
         neonEffects: settings.neonEffects,
         fontSize: settings.fontSize,
