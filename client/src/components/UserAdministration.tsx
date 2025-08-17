@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Users, Plus, Edit, Trash2, Shield, UserCheck } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Users, Plus, Edit, Trash2, Shield, UserCheck, Monitor, MapPin, Clock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,320 +8,550 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface User {
   id: string;
-  nombre: string;
+  username: string;
   email: string;
-  rol: "Administrador" | "Investigador" | "Analista" | "Auditor";
-  estado: "Activo" | "Inactivo";
-  fechaCreacion: string;
-  ultimoAcceso: string;
+  firstName: string;
+  lastName: string;
+  role: "admin" | "user" | "investigator" | "auditor";
+  isActive: "true" | "false";
+  createdAt: string;
+  lastLoginAt?: string;
 }
 
-const mockUsers: User[] = [
-  {
-    id: "1",
-    nombre: "Admin Sistema",
-    email: "admin@cybercrime.com",
-    rol: "Administrador",
-    estado: "Activo",
-    fechaCreacion: "2025-01-01",
-    ultimoAcceso: "2025-01-16"
-  },
-  {
-    id: "2", 
-    nombre: "María González",
-    email: "maria@cybercrime.com",
-    rol: "Investigador",
-    estado: "Activo",
-    fechaCreacion: "2025-01-05",
-    ultimoAcceso: "2025-01-15"
-  },
-  {
-    id: "3",
-    nombre: "Carlos Rodríguez", 
-    email: "carlos@cybercrime.com",
-    rol: "Analista",
-    estado: "Inactivo",
-    fechaCreacion: "2025-01-10",
-    ultimoAcceso: "2025-01-12"
-  }
-];
+interface UserSession {
+  id: string;
+  userId: string;
+  sessionId: string;
+  ipAddress: string;
+  userAgent: string;
+  deviceInfo: string;
+  browser: string;
+  os: string;
+  location: string;
+  loginAt: string;
+  logoutAt?: string;
+  isActive: "true" | "false";
+  user?: User;
+}
 
 export function UserAdministration() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    nombre: "",
+    username: "",
     email: "",
-    rol: "Investigador" as User["rol"],
-    estado: "Activo" as User["estado"]
+    password: "",
+    firstName: "",
+    lastName: "",
+    role: "user" as User["role"],
+    isActive: "true" as User["isActive"]
   });
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const filteredUsers = users.filter(user =>
-    user.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  // Fetch users
+  const { data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: ["/api/users"],
+    queryFn: () => apiRequest("/api/users")
+  });
+
+  // Fetch sessions
+  const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
+    queryKey: ["/api/sessions"],
+    queryFn: () => apiRequest("/api/sessions")
+  });
+
+  // Create user mutation
+  const createUserMutation = useMutation({
+    mutationFn: (userData: typeof formData) => apiRequest("/api/users", {
+      method: "POST",
+      body: JSON.stringify(userData),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setIsDialogOpen(false);
+      resetForm();
+      toast({
+        title: "Usuario creado",
+        description: "El usuario ha sido creado exitosamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al crear usuario",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Update user mutation
+  const updateUserMutation = useMutation({
+    mutationFn: ({ id, userData }: { id: string; userData: Partial<typeof formData> }) =>
+      apiRequest(`/api/users/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(userData),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setIsDialogOpen(false);
+      resetForm();
+      toast({
+        title: "Usuario actualizado",
+        description: "El usuario ha sido actualizado exitosamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al actualizar usuario",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: (id: string) => apiRequest(`/api/users/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Usuario eliminado",
+        description: "El usuario ha sido eliminado del sistema",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al eliminar usuario",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const filteredUsers = users.filter((user: User) =>
+    `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getRoleBadgeVariant = (rol: string) => {
-    switch (rol) {
-      case "Administrador": return "destructive";
-      case "Investigador": return "default";
-      case "Analista": return "secondary";
-      case "Auditor": return "outline";
+  const getRoleBadgeVariant = (role: string) => {
+    switch (role) {
+      case "admin": return "destructive";
+      case "investigator": return "default";
+      case "user": return "secondary";
+      case "auditor": return "outline";
       default: return "secondary";
     }
   };
 
-  const getEstadoBadgeVariant = (estado: string) => {
-    return estado === "Activo" ? "default" : "secondary";
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case "admin": return "Administrador";
+      case "investigator": return "Investigador";
+      case "user": return "Usuario";
+      case "auditor": return "Auditor";
+      default: return "Usuario";
+    }
+  };
+
+  const getEstadoBadgeVariant = (isActive: string) => {
+    return isActive === "true" ? "default" : "secondary";
+  };
+
+  const resetForm = () => {
+    setFormData({
+      username: "",
+      email: "",
+      password: "",
+      firstName: "",
+      lastName: "",
+      role: "user",
+      isActive: "true"
+    });
+    setEditingUser(null);
   };
 
   const handleSubmit = () => {
-    if (!formData.nombre || !formData.email) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.username) {
       toast({
         title: "Error",
-        description: "Nombre y email son obligatorios",
+        description: "Todos los campos son obligatorios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!editingUser && !formData.password) {
+      toast({
+        title: "Error",
+        description: "La contraseña es obligatoria para usuarios nuevos",
         variant: "destructive",
       });
       return;
     }
 
     if (editingUser) {
-      // Editar usuario existente
-      setUsers(users.map(user => 
-        user.id === editingUser.id 
-          ? { ...user, ...formData }
-          : user
-      ));
-      toast({
-        title: "Usuario actualizado",
-        description: "Los datos del usuario han sido actualizados exitosamente",
-      });
+      const updateData = { ...formData };
+      if (!updateData.password) {
+        delete updateData.password; // Don't update password if empty
+      }
+      updateUserMutation.mutate({ id: editingUser.id, userData: updateData });
     } else {
-      // Crear nuevo usuario
-      const newUser: User = {
-        id: Date.now().toString(),
-        ...formData,
-        fechaCreacion: new Date().toISOString().split('T')[0],
-        ultimoAcceso: "-"
-      };
-      setUsers([...users, newUser]);
-      toast({
-        title: "Usuario creado",
-        description: "El nuevo usuario ha sido creado exitosamente",
-      });
+      createUserMutation.mutate(formData);
     }
-
-    // Resetear formulario
-    setFormData({
-      nombre: "",
-      email: "",
-      rol: "Investigador",
-      estado: "Activo"
-    });
-    setEditingUser(null);
-    setIsDialogOpen(false);
   };
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
     setFormData({
-      nombre: user.nombre,
+      username: user.username,
       email: user.email,
-      rol: user.rol,
-      estado: user.estado
+      password: "", // Never prefill password
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      isActive: user.isActive
     });
     setIsDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
-    setUsers(users.filter(user => user.id !== id));
-    toast({
-      title: "Usuario eliminado",
-      description: "El usuario ha sido eliminado del sistema",
-    });
+    if (confirm("¿Estás seguro de que quieres eliminar este usuario?")) {
+      deleteUserMutation.mutate(id);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-ES');
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-ES');
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold matrix-text font-mono">[ ADMINISTRACIÓN DE USUARIOS ]</h2>
-          <p className="text-muted-foreground font-mono">Gestión de usuarios del sistema</p>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="neon-border font-mono" onClick={() => {
-              setEditingUser(null);
-              setFormData({
-                nombre: "",
-                email: "",
-                rol: "Investigador",
-                estado: "Activo"
-              });
-            }}>
-              <Plus className="w-4 h-4 mr-2" />
-              AGREGAR USUARIO
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="theme-modal">
-            <DialogHeader>
-              <DialogTitle className="font-mono">
-                {editingUser ? "EDITAR USUARIO" : "NUEVO USUARIO"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingUser ? "Modifica los datos del usuario" : "Agrega un nuevo usuario al sistema"}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="nombre" className="text-right font-mono">
-                  Nombre
-                </Label>
-                <Input
-                  id="nombre"
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                  className="col-span-3"
-                  placeholder="Nombre completo"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right font-mono">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="col-span-3"
-                  placeholder="usuario@cybercrime.com"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="rol" className="text-right font-mono">
-                  Rol
-                </Label>
-                <Select value={formData.rol} onValueChange={(value: User["rol"]) => setFormData({...formData, rol: value})}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Seleccionar rol" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Administrador">Administrador</SelectItem>
-                    <SelectItem value="Investigador">Investigador</SelectItem>
-                    <SelectItem value="Analista">Analista</SelectItem>
-                    <SelectItem value="Auditor">Auditor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="estado" className="text-right font-mono">
-                  Estado
-                </Label>
-                <Select value={formData.estado} onValueChange={(value: User["estado"]) => setFormData({...formData, estado: value})}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Seleccionar estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Activo">Activo</SelectItem>
-                    <SelectItem value="Inactivo">Inactivo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" onClick={handleSubmit} className="font-mono">
-                {editingUser ? "ACTUALIZAR" : "CREAR"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      <div className="border-l-4 border-primary pl-4">
+        <h1 className="text-2xl font-bold font-mono tracking-tight">ADMINISTRACIÓN DE USUARIOS</h1>
+        <p className="text-muted-foreground">Gestiona usuarios del sistema y monitorea sesiones activas</p>
       </div>
 
-      <Card className="neon-border theme-card">
-        <CardHeader>
-          <CardTitle className="flex items-center font-mono">
-            <Users className="w-5 h-5 mr-2 text-primary" />
-            USUARIOS DEL SISTEMA
-          </CardTitle>
-          <CardDescription>
-            Lista de usuarios registrados en el sistema
-          </CardDescription>
-          <div className="flex items-center space-x-2">
-            <Input
-              placeholder="Buscar usuarios..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-mono">NOMBRE</TableHead>
-                <TableHead className="font-mono">EMAIL</TableHead>
-                <TableHead className="font-mono">ROL</TableHead>
-                <TableHead className="font-mono">ESTADO</TableHead>
-                <TableHead className="font-mono">ÚLTIMO ACCESO</TableHead>
-                <TableHead className="font-mono">ACCIONES</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-mono">{user.nombre}</TableCell>
-                  <TableCell className="font-mono">{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={getRoleBadgeVariant(user.rol)} className="font-mono">
-                      {user.rol}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getEstadoBadgeVariant(user.estado)} className="font-mono">
-                      {user.estado === "Activo" ? (
-                        <UserCheck className="w-3 h-3 mr-1" />
-                      ) : (
-                        <Shield className="w-3 h-3 mr-1" />
-                      )}
-                      {user.estado}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-mono">{user.ultimoAcceso}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(user)}
-                        className="font-mono"
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(user.id)}
-                        className="font-mono"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="users" className="font-mono">USUARIOS</TabsTrigger>
+          <TabsTrigger value="sessions" className="font-mono">SESIONES ACTIVAS</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="users" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-mono flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                USUARIOS DEL SISTEMA
+              </CardTitle>
+              <CardDescription>
+                Administra cuentas de usuario y permisos de acceso
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="relative w-72">
+                  <Input
+                    placeholder="Buscar usuarios..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="font-mono"
+                  />
+                </div>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      onClick={() => {
+                        resetForm();
+                        setIsDialogOpen(true);
+                      }}
+                      className="font-mono"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      NUEVO USUARIO
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="theme-modal">
+                    <DialogHeader>
+                      <DialogTitle className="font-mono">
+                        {editingUser ? "EDITAR USUARIO" : "NUEVO USUARIO"}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {editingUser ? "Modifica los datos del usuario" : "Agrega un nuevo usuario al sistema"}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="username" className="text-right font-mono">
+                          Usuario
+                        </Label>
+                        <Input
+                          id="username"
+                          value={formData.username}
+                          onChange={(e) => setFormData({...formData, username: e.target.value})}
+                          className="col-span-3"
+                          placeholder="nombre_usuario"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="firstName" className="text-right font-mono">
+                          Nombre
+                        </Label>
+                        <Input
+                          id="firstName"
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                          className="col-span-3"
+                          placeholder="Nombre"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="lastName" className="text-right font-mono">
+                          Apellido
+                        </Label>
+                        <Input
+                          id="lastName"
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                          className="col-span-3"
+                          placeholder="Apellido"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="email" className="text-right font-mono">
+                          Email
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          className="col-span-3"
+                          placeholder="usuario@cybercrime.com"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="password" className="text-right font-mono">
+                          Contraseña
+                        </Label>
+                        <div className="col-span-3 relative">
+                          <Input
+                            id="password"
+                            type={showPassword ? "text" : "password"}
+                            value={formData.password}
+                            onChange={(e) => setFormData({...formData, password: e.target.value})}
+                            placeholder={editingUser ? "Dejar vacío para no cambiar" : "Contraseña"}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="role" className="text-right font-mono">
+                          Rol
+                        </Label>
+                        <Select value={formData.role} onValueChange={(value: User["role"]) => setFormData({...formData, role: value})}>
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Seleccionar rol" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">Administrador</SelectItem>
+                            <SelectItem value="investigator">Investigador</SelectItem>
+                            <SelectItem value="user">Usuario</SelectItem>
+                            <SelectItem value="auditor">Auditor</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="isActive" className="text-right font-mono">
+                          Estado
+                        </Label>
+                        <Select value={formData.isActive} onValueChange={(value: User["isActive"]) => setFormData({...formData, isActive: value})}>
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Seleccionar estado" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="true">Activo</SelectItem>
+                            <SelectItem value="false">Inactivo</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                    <DialogFooter>
+                      <Button 
+                        type="submit" 
+                        onClick={handleSubmit}
+                        disabled={createUserMutation.isPending || updateUserMutation.isPending}
+                        className="font-mono"
+                      >
+                        {editingUser ? "ACTUALIZAR" : "CREAR"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {usersLoading ? (
+                <div className="text-center py-8">
+                  <div className="font-mono">Cargando usuarios...</div>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="font-mono">USUARIO</TableHead>
+                      <TableHead className="font-mono">NOMBRE</TableHead>
+                      <TableHead className="font-mono">EMAIL</TableHead>
+                      <TableHead className="font-mono">ROL</TableHead>
+                      <TableHead className="font-mono">ESTADO</TableHead>
+                      <TableHead className="font-mono">ÚLTIMO ACCESO</TableHead>
+                      <TableHead className="font-mono">ACCIONES</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((user: User) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-mono">{user.username}</TableCell>
+                        <TableCell className="font-mono">{user.firstName} {user.lastName}</TableCell>
+                        <TableCell className="font-mono">{user.email}</TableCell>
+                        <TableCell>
+                          <Badge variant={getRoleBadgeVariant(user.role)} className="font-mono">
+                            {getRoleLabel(user.role)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getEstadoBadgeVariant(user.isActive)} className="font-mono">
+                            {user.isActive === "true" ? (
+                              <UserCheck className="w-3 h-3 mr-1" />
+                            ) : (
+                              <Shield className="w-3 h-3 mr-1" />
+                            )}
+                            {user.isActive === "true" ? "Activo" : "Inactivo"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono">
+                          {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : "Nunca"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(user)}
+                              className="font-mono"
+                              data-testid={`button-edit-user-${user.id}`}
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDelete(user.id)}
+                              className="font-mono"
+                              data-testid={`button-delete-user-${user.id}`}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sessions" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-mono flex items-center gap-2">
+                <Monitor className="w-5 h-5" />
+                SESIONES ACTIVAS
+              </CardTitle>
+              <CardDescription>
+                Monitorea las sesiones activas con información de dispositivos e IP
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {sessionsLoading ? (
+                <div className="text-center py-8">
+                  <div className="font-mono">Cargando sesiones...</div>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="font-mono">USUARIO</TableHead>
+                      <TableHead className="font-mono">DIRECCIÓN IP</TableHead>
+                      <TableHead className="font-mono">DISPOSITIVO</TableHead>
+                      <TableHead className="font-mono">NAVEGADOR</TableHead>
+                      <TableHead className="font-mono">SISTEMA</TableHead>
+                      <TableHead className="font-mono">UBICACIÓN</TableHead>
+                      <TableHead className="font-mono">INICIO SESIÓN</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sessions.map((session: UserSession) => (
+                      <TableRow key={session.id}>
+                        <TableCell className="font-mono">
+                          {session.user ? `${session.user.firstName} ${session.user.lastName}` : 'Usuario desconocido'}
+                        </TableCell>
+                        <TableCell className="font-mono">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {session.ipAddress}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono">{session.deviceInfo}</TableCell>
+                        <TableCell className="font-mono">{session.browser}</TableCell>
+                        <TableCell className="font-mono">{session.os}</TableCell>
+                        <TableCell className="font-mono">{session.location}</TableCell>
+                        <TableCell className="font-mono">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {formatDateTime(session.loginAt)}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {sessions.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 font-mono">
+                          No hay sesiones activas
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

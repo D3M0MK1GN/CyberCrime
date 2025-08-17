@@ -2,20 +2,35 @@ import {
   users,
   cyberCases,
   userSettings,
+  userSessions,
   type User,
   type UpsertUser,
   type CyberCase,
   type InsertCyberCase,
   type UserSettings,
   type InsertUserSettings,
+  type UserSession,
+  type InsertUserSession,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, and, gte, lte, count, sql } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations for Replit Auth
+  // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: Omit<UpsertUser, 'id'>): Promise<User>;
+  updateUser(id: string, user: Partial<UpsertUser>): Promise<User>;
+  deleteUser(id: string): Promise<void>;
+  getAllUsers(): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
+
+  // User session operations
+  createUserSession(session: Omit<InsertUserSession, 'id'>): Promise<UserSession>;
+  getUserSessions(userId: string): Promise<UserSession[]>;
+  getAllActiveSessions(): Promise<(UserSession & { user: User })[]>;
+  updateSessionLogout(sessionId: string): Promise<void>;
 
   // User settings operations
   getUserSettings(userId: string): Promise<UserSettings | undefined>;
@@ -50,6 +65,38 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: Omit<UpsertUser, 'id'>): Promise<User> {
+    const [user] = await db.insert(users).values(userData).returning();
+    return user;
+  }
+
+  async updateUser(id: string, userData: Partial<UpsertUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ ...userData, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
@@ -63,6 +110,43 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async createUserSession(sessionData: Omit<InsertUserSession, 'id'>): Promise<UserSession> {
+    const [session] = await db.insert(userSessions).values(sessionData).returning();
+    return session;
+  }
+
+  async getUserSessions(userId: string): Promise<UserSession[]> {
+    return await db
+      .select()
+      .from(userSessions)
+      .where(eq(userSessions.userId, userId))
+      .orderBy(desc(userSessions.loginAt));
+  }
+
+  async getAllActiveSessions(): Promise<(UserSession & { user: User })[]> {
+    const sessions = await db
+      .select({
+        session: userSessions,
+        user: users
+      })
+      .from(userSessions)
+      .innerJoin(users, eq(userSessions.userId, users.id))
+      .where(eq(userSessions.isActive, "true"))
+      .orderBy(desc(userSessions.loginAt));
+    
+    return sessions.map(row => ({ ...row.session, user: row.user }));
+  }
+
+  async updateSessionLogout(sessionId: string): Promise<void> {
+    await db
+      .update(userSessions)
+      .set({ 
+        isActive: "false", 
+        logoutAt: new Date() 
+      })
+      .where(eq(userSessions.sessionId, sessionId));
   }
 
   async getUserSettings(userId: string): Promise<UserSettings | undefined> {

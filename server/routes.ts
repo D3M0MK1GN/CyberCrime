@@ -1,10 +1,32 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCyberCaseSchema } from "@shared/schema";
+import { insertCyberCaseSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import crypto from "crypto";
+
+// Helper function to parse user agent
+function parseUserAgent(userAgent: string) {
+  const browser = userAgent.includes('Chrome') ? 'Chrome' : 
+                 userAgent.includes('Firefox') ? 'Firefox' : 
+                 userAgent.includes('Safari') ? 'Safari' : 
+                 userAgent.includes('Edge') ? 'Edge' : 'Unknown';
+  
+  const os = userAgent.includes('Windows') ? 'Windows' : 
+            userAgent.includes('Mac') ? 'macOS' : 
+            userAgent.includes('Linux') ? 'Linux' : 
+            userAgent.includes('Android') ? 'Android' : 
+            userAgent.includes('iOS') ? 'iOS' : 'Unknown';
+  
+  return { browser, os };
+}
+
+// Hash password function (simple for demo - use bcrypt in production)
+function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
 
 // Simple auth middleware
 const isAuthenticated = (req: any, res: any, next: any) => {
@@ -38,33 +60,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   }));
 
-  // Simple login route
+  // Initialize admin user if not exists
+  async function initializeAdminUser() {
+    try {
+      const adminUser = await storage.getUserByUsername("admin");
+      if (!adminUser) {
+        await storage.createUser({
+          username: "admin",
+          email: "admin@cybercrime.com",
+          password: hashPassword("admin123"),
+          firstName: "Administrador",
+          lastName: "Sistema",
+          role: "admin",
+          isActive: "true"
+        });
+        console.log("Admin user created successfully");
+      }
+    } catch (error) {
+      console.error("Error creating admin user:", error);
+    }
+  }
+
+  // Initialize admin user
+  await initializeAdminUser();
+
+  // Login route with session tracking
   app.post('/api/login', async (req: any, res) => {
-    const { username, password } = req.body;
-    
-    // Simple hardcoded credentials (in production use proper auth)
-    if (username === "admin" && password === "admin123") {
-      req.session.userId = "admin";
+    try {
+      const { username, password } = req.body;
+      
+      const user = await storage.getUserByUsername(username);
+      if (!user || hashPassword(password) !== user.password || user.isActive !== "true") {
+        return res.status(401).json({ message: "Credenciales inválidas" });
+      }
+
+      // Update last login
+      await storage.updateUser(user.id, { lastLoginAt: new Date() });
+
+      // Create session record
+      const sessionId = req.sessionID || crypto.randomUUID();
+      const userAgent = req.headers['user-agent'] || '';
+      const { browser, os } = parseUserAgent(userAgent);
+      const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+
+      await storage.createUserSession({
+        userId: user.id,
+        sessionId,
+        ipAddress,
+        userAgent,
+        deviceInfo: `${browser} en ${os}`,
+        browser,
+        os,
+        location: 'No disponible', // Could integrate with IP geolocation service
+        isActive: "true"
+      });
+
+      req.session.userId = user.id;
       req.session.user = {
-        id: "admin",
-        username: "admin",
-        email: "admin@cybercrime.com",
-        firstName: "Administrador",
-        lastName: "Sistema",
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
       };
+      
       res.json({ success: true });
-    } else {
-      res.status(401).json({ message: "Invalid credentials" });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
     }
   });
 
-  app.post('/api/logout', (req: any, res) => {
-    req.session.destroy((err: any) => {
-      if (err) {
-        return res.status(500).json({ message: "Could not log out" });
+  app.post('/api/logout', async (req: any, res) => {
+    try {
+      const sessionId = req.sessionID;
+      if (sessionId) {
+        await storage.updateSessionLogout(sessionId);
       }
-      res.json({ success: true });
-    });
+      
+      req.session.destroy((err: any) => {
+        if (err) {
+          return res.status(500).json({ message: "No se pudo cerrar sesión" });
+        }
+        res.json({ success: true });
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
   });
 
   // Auth routes
@@ -254,6 +338,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // User management endpoints
+  app.get('/api/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      // Remove password from response
+      const safeUsers = users.map(({ password, ...user }) => user);
+      res.json(safeUsers);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Error al obtener usuarios' });
+    }
+  });
+
+  app.post('/api/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      // Hash password before storing
+      const hashedPassword = hashPassword(userData.password);
+      const newUser = await storage.createUser({
+        ...userData,
+        password: hashedPassword
+      });
+      // Remove password from response
+      const { password, ...safeUser } = newUser;
+      res.json(safeUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Error de validación", errors: error.errors });
+      }
+      console.error('Error creating user:', error);
+      res.status(500).json({ message: 'Error al crear usuario' });
+    }
+  });
+
+  app.put('/api/users/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userData = insertUserSchema.partial().parse(req.body);
+      // Hash password if provided
+      if (userData.password) {
+        userData.password = hashPassword(userData.password);
+      }
+      const updatedUser = await storage.updateUser(id, userData);
+      // Remove password from response
+      const { password, ...safeUser } = updatedUser;
+      res.json(safeUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Error de validación", errors: error.errors });
+      }
+      console.error('Error updating user:', error);
+      res.status(500).json({ message: 'Error al actualizar usuario' });
+    }
+  });
+
+  app.delete('/api/users/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteUser(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ message: 'Error al eliminar usuario' });
+    }
+  });
+
+  // User sessions endpoints
+  app.get('/api/sessions', isAuthenticated, async (req: any, res) => {
+    try {
+      const sessions = await storage.getAllActiveSessions();
+      res.json(sessions);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      res.status(500).json({ message: 'Error al obtener sesiones' });
+    }
+  });
+
+  app.get('/api/users/:id/sessions', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const sessions = await storage.getUserSessions(id);
+      res.json(sessions);
+    } catch (error) {
+      console.error('Error fetching user sessions:', error);
+      res.status(500).json({ message: 'Error al obtener sesiones del usuario' });
+    }
+  });
+
   // Chatbot endpoint
   app.post('/api/chatbot/message', isAuthenticated, async (req: any, res) => {
     try {
