@@ -198,17 +198,17 @@ export function DataManagementOptimized() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold matrix-text">[ GESTIÓN DE DATOS ]</h2>
-          <p className="text-muted-foreground">Sistema de administración de delitos informáticos</p>
+          <h2 className="text-2xl font-bold text-primary-custom font-mono">[ GESTIÓN DE CASOS ]</h2>
+          <p className="text-primary-custom/70 font-mono">Sistema de casos de delitos informáticos</p>
         </div>
-        <Button data-testid="button-new-case" onClick={() => setModalOpen(true)} className="mt-4 sm:mt-0 neon-button">
+        <Button data-testid="button-new-case" onClick={() => setModalOpen(true)} className="mt-4 sm:mt-0 btn-primary">
           <Plus className="w-4 h-4 mr-2" />
           NUEVO CASO
         </Button>
       </div>
 
       {/* Filters */}
-      <Card className="neon-border">
+      <Card className="card-primary">
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
@@ -218,12 +218,12 @@ export function DataManagementOptimized() {
                 placeholder="Buscar por expediente..."
                 value={filters.search}
                 onChange={(e) => updateFilter("search", e.target.value)}
-                className="pl-10 terminal-input"
+                className="pl-10 input-primary"
               />
             </div>
 
             <Select value={filters.crimeType || "todos"} onValueChange={(value) => updateFilter("crimeType", value === "todos" ? "" : value)}>
-              <SelectTrigger data-testid="select-crime-type">
+              <SelectTrigger data-testid="select-crime-type" className="input-primary">
                 <SelectValue placeholder="Tipo de delito" />
               </SelectTrigger>
               <SelectContent>
@@ -242,7 +242,7 @@ export function DataManagementOptimized() {
               value={filters.dateFrom}
               onChange={(e) => updateFilter("dateFrom", e.target.value)}
               placeholder="Fecha desde"
-              className="terminal-input"
+              className="input-primary"
             />
 
             <Input
@@ -251,12 +251,12 @@ export function DataManagementOptimized() {
               value={filters.dateTo}
               onChange={(e) => updateFilter("dateTo", e.target.value)}
               placeholder="Fecha hasta"
-              className="terminal-input"
+              className="input-primary"
             />
           </div>
 
           <div className="mt-4">
-            <Button data-testid="button-clear" variant="outline" onClick={clearFilters} className="neon-button">
+            <Button data-testid="button-clear" variant="outline" onClick={clearFilters} className="border-primary/30 text-primary-custom hover:bg-primary/10">
               <X className="w-4 h-4 mr-2" />
               LIMPIAR FILTROS
             </Button>
@@ -265,31 +265,31 @@ export function DataManagementOptimized() {
       </Card>
 
       {/* Data Table */}
-      <Card className="neon-border">
+      <Card className="card-primary">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full hacker-table">
+            <table className="w-full card-primary">
               <thead className="border-b">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase">FECHA</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase">N° EXPEDIENTE</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase">DELITO</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase">VÍCTIMA</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase">ESTADO</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase">MONTO</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase">ACCIONES</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-primary-custom bg-muted border-b border-primary/30">FECHA</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-primary-custom bg-muted border-b border-primary/30">N° EXPEDIENTE</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-primary-custom bg-muted border-b border-primary/30">DELITO</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-primary-custom bg-muted border-b border-primary/30">VÍCTIMA</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-primary-custom bg-muted border-b border-primary/30">ESTADO</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-primary-custom bg-muted border-b border-primary/30">MONTO</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-primary-custom bg-muted border-b border-primary/30">ACCIONES</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-primary/20">
                 {!hasResults ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
+                    <td colSpan={7} className="px-6 py-12 text-center text-primary-custom/70">
                       &gt;&gt; NO SE ENCONTRARON CASOS EN EL SISTEMA &lt;&lt;
                     </td>
                   </tr>
                 ) : (
                   casesData.cases.map((caseItem) => (
-                    <tr key={caseItem.id} className="hover:bg-primary/5 transition-all duration-200">
+                    <tr key={caseItem.id} className="hover:bg-primary/10 transition-all duration-200 border-b border-primary/20">
                       <td className="px-6 py-4 text-sm text-foreground font-mono">
                         {formatDate(caseItem.caseDate)}
                       </td>
@@ -315,36 +315,16 @@ export function DataManagementOptimized() {
                         {formatCurrency(caseItem.stolenAmount)}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex space-x-1">
-                          <Button
-                            data-testid={`button-view-${caseItem.id}`}
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => viewCase(caseItem)}
-                            className="text-primary hover:text-primary/80 hover:bg-primary/10"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            data-testid={`button-edit-${caseItem.id}`}
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditModal(caseItem)}
-                            className="text-accent hover:text-accent/80 hover:bg-accent/10"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            data-testid={`button-delete-${caseItem.id}`}
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => confirmDelete(caseItem.id)}
-                            disabled={deleteMutation.isPending}
-                            className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          data-testid={`button-delete-${caseItem.id}`}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => confirmDelete(caseItem.id)}
+                          disabled={deleteMutation.isPending}
+                          className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))
@@ -355,8 +335,8 @@ export function DataManagementOptimized() {
 
           {/* Pagination */}
           {hasResults && totalPages > 1 && (
-            <div className="bg-secondary px-6 py-4 border-t border-border flex items-center justify-between">
-              <div className="text-sm text-muted-foreground font-mono">
+            <div className="bg-muted px-6 py-4 border-t border-primary/30 flex items-center justify-between">
+              <div className="text-sm text-primary-custom/70 font-mono">
                 &gt;&gt; MOSTRANDO {((filters.page - 1) * filters.limit) + 1}-{Math.min(filters.page * filters.limit, casesData.total)} DE {casesData.total} REGISTROS
               </div>
               <div className="flex items-center space-x-2">
@@ -366,7 +346,7 @@ export function DataManagementOptimized() {
                   size="sm"
                   onClick={() => updateFilter("page", filters.page - 1)}
                   disabled={filters.page <= 1}
-                  className="neon-button"
+                  className="border-primary/30 text-primary-custom hover:bg-primary/10"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   ANTERIOR
@@ -380,7 +360,7 @@ export function DataManagementOptimized() {
                   size="sm"
                   onClick={() => updateFilter("page", filters.page + 1)}
                   disabled={filters.page >= totalPages}
-                  className="neon-button"
+                  className="border-primary/30 text-primary-custom hover:bg-primary/10"
                 >
                   SIGUIENTE
                   <ChevronRight className="w-4 h-4" />
@@ -394,7 +374,8 @@ export function DataManagementOptimized() {
       <CaseModal
         isOpen={modalOpen}
         onClose={closeModal}
-        editCase={editCase}
+        onSubmit={() => {}}
+        initialData={editCase}
       />
     </div>
   );
