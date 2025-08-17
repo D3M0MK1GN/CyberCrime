@@ -22,8 +22,21 @@ export function Sidebar({ isOpen, onClose, currentSection, onSectionChange }: Si
     onClose(); // Close sidebar on mobile after selection
   };
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/logout', { 
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (response.ok) {
+        window.location.href = '/';
+      } else {
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      window.location.href = '/';
+    }
   };
 
   return (

@@ -177,7 +177,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/logout', async (req: any, res) => {
+  // Logout handler function
+  const handleLogout = async (req: any, res: any) => {
     try {
       const sessionId = req.sessionID;
       if (sessionId) {
@@ -194,7 +195,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Logout error:", error);
       res.status(500).json({ message: "Error interno del servidor" });
     }
-  });
+  };
+
+  // Support both GET and POST for logout
+  app.post('/api/logout', handleLogout);
+  app.get('/api/logout', handleLogout);
 
   // Auth routes
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
