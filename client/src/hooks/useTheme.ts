@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export interface ThemeSettings {
   primaryColor: string;
+  secondaryColor: string;
   transparency: number;
   neonEffects: boolean;
   fontSize: number;
@@ -19,6 +20,7 @@ export const useTheme = () => {
 
   const [settings, setSettings] = useState<ThemeSettings>({
     primaryColor: "green",
+    secondaryColor: "gray",
     transparency: 85,
     neonEffects: false,
     fontSize: 14,
@@ -29,8 +31,8 @@ export const useTheme = () => {
   const applyThemeChanges = (newSettings: ThemeSettings) => {
     const root = document.documentElement;
     
-    // Color mappings
-    const colorMap: Record<string, { primary: string; primaryForeground: string; accent: string; ring: string }> = {
+    // Primary color mappings
+    const primaryColorMap: Record<string, { primary: string; primaryForeground: string; accent: string; ring: string }> = {
       green: { primary: "120 100% 45%", primaryForeground: "0 0% 0%", accent: "120 100% 50%", ring: "120 100% 45%" },
       blue: { primary: "200 100% 45%", primaryForeground: "0 0% 0%", accent: "200 100% 50%", ring: "200 100% 45%" },
       purple: { primary: "280 100% 45%", primaryForeground: "0 0% 0%", accent: "280 100% 50%", ring: "280 100% 45%" },
@@ -38,13 +40,25 @@ export const useTheme = () => {
       orange: { primary: "30 100% 45%", primaryForeground: "0 0% 0%", accent: "30 100% 50%", ring: "30 100% 45%" },
     };
 
-    const colors = colorMap[newSettings.primaryColor] || colorMap.green;
+    // Secondary color mappings
+    const secondaryColorMap: Record<string, { secondary: string; secondaryForeground: string }> = {
+      gray: { secondary: "0 0% 15%", secondaryForeground: "0 0% 98%" },
+      slate: { secondary: "210 40% 20%", secondaryForeground: "0 0% 98%" },
+      zinc: { secondary: "240 4% 20%", secondaryForeground: "0 0% 98%" },
+      stone: { secondary: "25 5% 20%", secondaryForeground: "0 0% 98%" },
+      neutral: { secondary: "0 0% 20%", secondaryForeground: "0 0% 98%" },
+    };
+
+    const primaryColors = primaryColorMap[newSettings.primaryColor] || primaryColorMap.green;
+    const secondaryColors = secondaryColorMap[newSettings.secondaryColor] || secondaryColorMap.gray;
     
     // Apply colors
-    root.style.setProperty("--primary", colors.primary);
-    root.style.setProperty("--primary-foreground", colors.primaryForeground);
-    root.style.setProperty("--accent", colors.accent);
-    root.style.setProperty("--ring", colors.ring);
+    root.style.setProperty("--primary", primaryColors.primary);
+    root.style.setProperty("--primary-foreground", primaryColors.primaryForeground);
+    root.style.setProperty("--accent", primaryColors.accent);
+    root.style.setProperty("--ring", primaryColors.ring);
+    root.style.setProperty("--secondary", secondaryColors.secondary);
+    root.style.setProperty("--secondary-foreground", secondaryColors.secondaryForeground);
     
     // Apply transparency
     root.style.setProperty("--card-opacity", (newSettings.transparency / 100).toString());
@@ -72,6 +86,7 @@ export const useTheme = () => {
     if (userSettings && typeof userSettings === 'object' && initialLoad) {
       const newSettings = {
         primaryColor: (userSettings as any).primaryColor || "green",
+        secondaryColor: (userSettings as any).secondaryColor || "gray",
         transparency: parseInt((userSettings as any).transparency) || 85,
         neonEffects: (userSettings as any).neonEffects === "true",
         fontSize: parseInt((userSettings as any).fontSize) || 14,

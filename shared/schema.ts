@@ -79,6 +79,7 @@ export const userSettings = pgTable("user_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
   primaryColor: varchar("primary_color").notNull().default("green"),
+  secondaryColor: varchar("secondary_color").notNull().default("gray"),
   transparency: varchar("transparency").notNull().default("85"),
   neonEffects: varchar("neon_effects").notNull().default("false"),
   fontSize: varchar("font_size").notNull().default("14"),

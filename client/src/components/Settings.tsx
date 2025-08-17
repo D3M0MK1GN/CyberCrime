@@ -18,6 +18,14 @@ const colorOptions = [
   { value: "orange", label: "NARANJA HACK", color: "hsl(30, 100%, 45%)" },
 ];
 
+const secondaryColorOptions = [
+  { value: "gray", label: "GRIS OSCURO", color: "hsl(0, 0%, 15%)" },
+  { value: "slate", label: "PIZARRA", color: "hsl(210, 40%, 20%)" },
+  { value: "zinc", label: "ZINC", color: "hsl(240, 4%, 20%)" },
+  { value: "stone", label: "PIEDRA", color: "hsl(25, 5%, 20%)" },
+  { value: "neutral", label: "NEUTRO", color: "hsl(0, 0%, 20%)" },
+];
+
 export function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -64,6 +72,7 @@ export function Settings() {
   const handleReset = () => {
     const defaultSettings: ThemeSettings = {
       primaryColor: "green",
+      secondaryColor: "gray",
       transparency: 85,
       neonEffects: false,
       fontSize: 14,
@@ -118,6 +127,39 @@ export function Settings() {
                 </SelectTrigger>
                 <SelectContent className="theme-modal">
                   {colorOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value} className="font-mono">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-4 h-4 rounded border border-border" 
+                          style={{ backgroundColor: option.color }}
+                        />
+                        {option.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Separator />
+
+            {/* Secondary Color */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium font-mono">COLOR SECUNDARIO</Label>
+              <Select value={settings.secondaryColor} onValueChange={(value) => updateSetting("secondaryColor", value)}>
+                <SelectTrigger className="neon-border font-mono">
+                  <SelectValue>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-4 h-4 rounded border border-border" 
+                        style={{ backgroundColor: secondaryColorOptions.find(opt => opt.value === settings.secondaryColor)?.color || "hsl(0, 0%, 15%)" }}
+                      />
+                      {secondaryColorOptions.find(opt => opt.value === settings.secondaryColor)?.label || "GRIS OSCURO"}
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="theme-modal">
+                  {secondaryColorOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value} className="font-mono">
                       <div className="flex items-center gap-3">
                         <div 
