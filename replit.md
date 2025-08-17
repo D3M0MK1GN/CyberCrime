@@ -208,12 +208,16 @@ Preferred communication style: Simple, everyday language (Spanish).
   - **Sistema CSS Dinámico**: Convertido todos los efectos visuales a variables CSS dinámicas
     - Matrix text effects, neon borders, scrollbars, tables, buttons, inputs ahora usan `hsl(var(--primary))`
     - Clases `theme-card` y `theme-modal` para transparencia dinámica en tiempo real
-    - Animaciones y efectos neón controlados por clases CSS condicionales
+    - **Efectos de Iluminación Eliminados**: Removidos todos los efectos de animación y resplandor
+      - Eliminadas animaciones `matrix-glow` y `neon-pulse`
+      - Quitados `text-shadow` y `box-shadow` de elementos
+      - Desactivadas transiciones automáticas por defecto
+      - Sistema mantiene colores dinámicos sin efectos de brillo
   - **TopBar y Sidebar**: Corregida aplicación de colores dinámicos en todos los componentes
     - Bordes, iconos, texto y efectos hover ahora responden a configuraciones del usuario
     - Transparencia dinámica aplicada correctamente con backdrop-blur
 - **Technical Implementation**:
   - Variables CSS: `--primary`, `--accent`, `--ring`, `--card-opacity`, `--modal-opacity`
-  - Sistema de clases condicionales: `.neon-enabled`, `.animations-enabled`
-  - Keyframes animados con colores dinámicos: `matrix-glow`, `neon-pulse`
-- **Status**: ✅ Completed - Sistema completo de configuración visual funcionando correctamente
+  - Sistema de colores limpios sin efectos de iluminación
+  - Configuración por defecto: efectos neón y animaciones desactivados
+- **Status**: ✅ Completed - Sistema completo de configuración visual funcionando correctamente sin efectos de iluminación

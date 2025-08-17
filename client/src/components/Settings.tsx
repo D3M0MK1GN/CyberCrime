@@ -30,9 +30,9 @@ export function Settings() {
   const [settings, setSettings] = useState<ThemeSettings>({
     primaryColor: "green",
     transparency: 85,
-    neonEffects: true,
+    neonEffects: false,
     fontSize: 14,
-    animations: true,
+    animations: false,
   });
 
   // Load settings from localStorage
@@ -71,19 +71,9 @@ export function Settings() {
     // Apply font size
     root.style.fontSize = `${settings.fontSize}px`;
     
-    // Apply neon effects class
-    if (settings.neonEffects) {
-      root.classList.add("neon-enabled");
-    } else {
-      root.classList.remove("neon-enabled");
-    }
-    
-    // Apply animations class
-    if (settings.animations) {
-      root.classList.add("animations-enabled");
-    } else {
-      root.classList.remove("animations-enabled");
-    }
+    // Efectos desactivados - no aplicar clases de efectos
+    root.classList.remove("neon-enabled");
+    root.classList.remove("animations-enabled");
   }, [settings]);
 
   const handleSave = () => {
@@ -98,9 +88,9 @@ export function Settings() {
     const defaultSettings: ThemeSettings = {
       primaryColor: "green",
       transparency: 85,
-      neonEffects: true,
+      neonEffects: false,
       fontSize: 14,
-      animations: true,
+      animations: false,
     };
     setSettings(defaultSettings);
     localStorage.removeItem("cyber-theme-settings");
