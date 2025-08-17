@@ -44,24 +44,29 @@ export function Settings() {
     animations: false,
   });
 
-  // Update local state when data is loaded
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  // Update local state when data is loaded - only on first load
   useEffect(() => {
-    if (userSettings && typeof userSettings === 'object') {
-      setSettings({
+    if (userSettings && typeof userSettings === 'object' && initialLoad) {
+      const newSettings = {
         primaryColor: (userSettings as any).primaryColor || "green",
         transparency: parseInt((userSettings as any).transparency) || 85,
         neonEffects: (userSettings as any).neonEffects === "true",
         fontSize: parseInt((userSettings as any).fontSize) || 14,
         animations: (userSettings as any).animations === "true",
-      });
+      };
+      setSettings(newSettings);
+      applyThemeChanges(newSettings);
+      setInitialLoad(false);
     }
-  }, [userSettings]);
+  }, [userSettings, initialLoad]);
 
-  // Apply theme changes to CSS variables
-  useEffect(() => {
+  // Apply theme changes to CSS variables - only when settings actually change
+  const applyThemeChanges = (newSettings: ThemeSettings) => {
     const root = document.documentElement;
     
-    // Color mappings - manteniendo los efectos originales
+    // Color mappings
     const colorMap: Record<string, { primary: string; primaryForeground: string; accent: string; ring: string }> = {
       green: { primary: "120 100% 45%", primaryForeground: "0 0% 0%", accent: "120 100% 50%", ring: "120 100% 45%" },
       blue: { primary: "200 100% 45%", primaryForeground: "0 0% 0%", accent: "200 100% 50%", ring: "200 100% 45%" },
@@ -70,25 +75,34 @@ export function Settings() {
       orange: { primary: "30 100% 45%", primaryForeground: "0 0% 0%", accent: "30 100% 50%", ring: "30 100% 45%" },
     };
 
-    const colors = colorMap[settings.primaryColor];
+    const colors = colorMap[newSettings.primaryColor];
     
-    // Apply colors using HSL values without hsl() wrapper
+    // Apply colors
     root.style.setProperty("--primary", colors.primary);
     root.style.setProperty("--primary-foreground", colors.primaryForeground);
     root.style.setProperty("--accent", colors.accent);
     root.style.setProperty("--ring", colors.ring);
     
-    // Apply transparency variables
-    root.style.setProperty("--card-opacity", (settings.transparency / 100).toString());
-    root.style.setProperty("--modal-opacity", (settings.transparency / 100).toString());
+    // Apply transparency
+    root.style.setProperty("--card-opacity", (newSettings.transparency / 100).toString());
+    root.style.setProperty("--modal-opacity", (newSettings.transparency / 100).toString());
     
     // Apply font size
-    root.style.fontSize = `${settings.fontSize}px`;
+    root.style.fontSize = `${newSettings.fontSize}px`;
     
-    // Efectos desactivados - no aplicar clases de efectos
-    root.classList.remove("neon-enabled");
-    root.classList.remove("animations-enabled");
-  }, [settings]);
+    // Handle effects
+    if (newSettings.neonEffects) {
+      root.classList.add("neon-enabled");
+    } else {
+      root.classList.remove("neon-enabled");
+    }
+    
+    if (newSettings.animations) {
+      root.classList.add("animations-enabled");
+    } else {
+      root.classList.remove("animations-enabled");
+    }
+  };
 
   // Save settings mutation
   const saveSettingsMutation = useMutation({
@@ -122,6 +136,7 @@ export function Settings() {
   });
 
   const handleSave = () => {
+    applyThemeChanges(settings);
     saveSettingsMutation.mutate(settings);
   };
 
@@ -134,6 +149,7 @@ export function Settings() {
       animations: false,
     };
     setSettings(defaultSettings);
+    applyThemeChanges(defaultSettings);
     saveSettingsMutation.mutate(defaultSettings);
     toast({
       title: "CONFIGURACIÓN RESTABLECIDA",
@@ -142,7 +158,9 @@ export function Settings() {
   };
 
   const updateSetting = <K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    applyThemeChanges(newSettings);
   };
 
   return (
@@ -271,24 +289,7 @@ export function Settings() {
               />
             </div>
 
-            <Separator />
 
-            {/* Preview */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium font-mono">VISTA PREVIA</Label>
-              <div className="p-4 border border-border rounded-lg bg-card/30">
-                <div className="flex items-center gap-3 mb-3">
-                  <Shield className="w-6 h-6 text-primary" />
-                  <span className="font-mono text-primary">CYBER-CRIME SYSTEM</span>
-                </div>
-                <div className="text-sm text-muted-foreground font-mono">
-                  Este es un ejemplo de cómo se ve el tema actual
-                </div>
-                <Button size="sm" className="mt-3 neon-border font-mono">
-                  BOTÓN DE PRUEBA
-                </Button>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
