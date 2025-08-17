@@ -7,20 +7,39 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import crypto from "crypto";
 
-// Helper function to parse user agent
+// Helper function to parse user agent with better device detection
 function parseUserAgent(userAgent: string) {
-  const browser = userAgent.includes('Chrome') ? 'Chrome' : 
-                 userAgent.includes('Firefox') ? 'Firefox' : 
-                 userAgent.includes('Safari') ? 'Safari' : 
-                 userAgent.includes('Edge') ? 'Edge' : 'Unknown';
+  let browser = 'Desconocido';
+  let os = 'Desconocido';
+  let deviceType = 'PC';
   
-  const os = userAgent.includes('Windows') ? 'Windows' : 
-            userAgent.includes('Mac') ? 'macOS' : 
-            userAgent.includes('Linux') ? 'Linux' : 
-            userAgent.includes('Android') ? 'Android' : 
-            userAgent.includes('iOS') ? 'iOS' : 'Unknown';
+  // Detectar tipo de dispositivo primero
+  const mobileRegex = /Mobile|Android|iPhone|iPod|BlackBerry|Windows Phone|Opera Mini/i;
+  const tabletRegex = /iPad|Tablet|PlayBook|Silk|Kindle/i;
   
-  return { browser, os };
+  if (tabletRegex.test(userAgent)) {
+    deviceType = 'Tablet';
+  } else if (mobileRegex.test(userAgent)) {
+    deviceType = 'Móvil';
+  }
+  
+  // Parse browser con mejor detección
+  if (userAgent.includes('Edg/')) browser = 'Edge';
+  else if (userAgent.includes('Chrome') && !userAgent.includes('Edg/')) browser = 'Chrome';
+  else if (userAgent.includes('Firefox')) browser = 'Firefox';
+  else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) browser = 'Safari';
+  else if (userAgent.includes('Opera')) browser = 'Opera';
+  
+  // Parse OS con mejor detección
+  if (userAgent.includes('Windows NT')) os = 'Windows';
+  else if (userAgent.includes('Mac OS X') || userAgent.includes('macOS')) os = 'macOS';
+  else if (userAgent.includes('iPhone OS') || userAgent.includes('iOS')) os = 'iOS';
+  else if (userAgent.includes('Android')) os = 'Android';
+  else if (userAgent.includes('Linux') && !userAgent.includes('Android')) os = 'Linux';
+  else if (userAgent.includes('Ubuntu')) os = 'Ubuntu';
+  else if (userAgent.includes('CrOS')) os = 'Chrome OS';
+  
+  return { browser, os, deviceType };
 }
 
 // Hash password function (simple for demo - use bcrypt in production)
@@ -145,7 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create session record
       const sessionId = req.sessionID || crypto.randomUUID();
       const userAgent = req.headers['user-agent'] || '';
-      const { browser, os } = parseUserAgent(userAgent);
+      const { browser, os, deviceType } = parseUserAgent(userAgent);
       // Get real IP address considering proxies
       let ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
                      req.headers['x-real-ip'] || 
@@ -168,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sessionId,
         ipAddress,
         userAgent,
-        deviceInfo: `${browser} en ${os}`,
+        deviceInfo: `${deviceType} - ${browser}`,
         browser,
         os,
         location: 'No disponible', // Could integrate with IP geolocation service
