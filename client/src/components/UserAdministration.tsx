@@ -17,8 +17,6 @@ interface User {
   id: string;
   username: string;
   email: string;
-  firstName: string;
-  lastName: string;
   role: "admin" | "user" | "investigator" | "auditor";
   isActive: "true" | "false";
   createdAt: string;
@@ -56,8 +54,6 @@ export function UserAdministration() {
     username: "",
     email: "",
     password: "",
-    firstName: "",
-    lastName: "",
     role: "user" as User["role"],
     isActive: "true" as User["isActive"]
   });
@@ -174,7 +170,6 @@ export function UserAdministration() {
   });
 
   const filteredUsers = users.filter((user: User) =>
-    `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -208,8 +203,6 @@ export function UserAdministration() {
       username: "",
       email: "",
       password: "",
-      firstName: "",
-      lastName: "",
       role: "user",
       isActive: "true"
     });
@@ -217,10 +210,10 @@ export function UserAdministration() {
   };
 
   const handleSubmit = () => {
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.username) {
+    if (!formData.email || !formData.username) {
       toast({
         title: "Error",
-        description: "Todos los campos son obligatorios",
+        description: "Usuario y email son obligatorios",
         variant: "destructive",
       });
       return;
@@ -254,8 +247,6 @@ export function UserAdministration() {
       username: user.username,
       email: user.email,
       password: "", // Never prefill password
-      firstName: user.firstName,
-      lastName: user.lastName,
       role: user.role,
       isActive: user.isActive
     });
@@ -345,30 +336,7 @@ export function UserAdministration() {
                           placeholder="nombre_usuario"
                         />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="firstName" className="text-right font-mono">
-                          Nombre
-                        </Label>
-                        <Input
-                          id="firstName"
-                          value={formData.firstName}
-                          onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                          className="col-span-3"
-                          placeholder="Nombre"
-                        />
-                      </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="lastName" className="text-right font-mono">
-                          Apellido
-                        </Label>
-                        <Input
-                          id="lastName"
-                          value={formData.lastName}
-                          onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                          className="col-span-3"
-                          placeholder="Apellido"
-                        />
-                      </div>
+
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="email" className="text-right font-mono">
                           Email
@@ -459,7 +427,6 @@ export function UserAdministration() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="font-mono">USUARIO</TableHead>
-                      <TableHead className="font-mono">NOMBRE</TableHead>
                       <TableHead className="font-mono">EMAIL</TableHead>
                       <TableHead className="font-mono">ROL</TableHead>
                       <TableHead className="font-mono">ESTADO</TableHead>
@@ -473,7 +440,6 @@ export function UserAdministration() {
                     {filteredUsers.map((user: User) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-mono">{user.username}</TableCell>
-                        <TableCell className="font-mono">{user.firstName} {user.lastName}</TableCell>
                         <TableCell className="font-mono">{user.email}</TableCell>
                         <TableCell>
                           <Badge variant={getRoleBadgeVariant(user.role)} className="font-mono">
@@ -564,7 +530,7 @@ export function UserAdministration() {
                     {sessions.map((session: UserSession) => (
                       <TableRow key={session.id}>
                         <TableCell className="font-mono">
-                          {session.user ? `${session.user.firstName} ${session.user.lastName}` : 'Usuario desconocido'}
+                          {session.user ? session.user.username : 'Usuario desconocido'}
                         </TableCell>
                         <TableCell className="font-mono">
                           <div className="flex items-center gap-1">
