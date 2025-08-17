@@ -77,6 +77,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User settings routes
+  app.get("/api/user/settings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || "admin";
+      const settings = await storage.getUserSettings(userId);
+      
+      // Return default settings if none exist
+      if (!settings) {
+        const defaultSettings = {
+          primaryColor: "green",
+          transparency: "85",
+          neonEffects: "false",
+          fontSize: "14",
+          animations: "false"
+        };
+        res.json(defaultSettings);
+      } else {
+        res.json({
+          primaryColor: settings.primaryColor,
+          transparency: settings.transparency,
+          neonEffects: settings.neonEffects,
+          fontSize: settings.fontSize,
+          animations: settings.animations
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching user settings:", error);
+      res.status(500).json({ message: "Failed to fetch user settings" });
+    }
+  });
+
+  app.post("/api/user/settings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || "admin";
+      const { primaryColor, transparency, neonEffects, fontSize, animations } = req.body;
+      
+      const settings = await storage.upsertUserSettings(userId, {
+        primaryColor: primaryColor || "green",
+        transparency: transparency?.toString() || "85",
+        neonEffects: neonEffects?.toString() || "false",
+        fontSize: fontSize?.toString() || "14",
+        animations: animations?.toString() || "false"
+      });
+      
+      res.json({
+        primaryColor: settings.primaryColor,
+        transparency: settings.transparency,
+        neonEffects: settings.neonEffects,
+        fontSize: settings.fontSize,
+        animations: settings.animations
+      });
+    } catch (error) {
+      console.error("Error saving user settings:", error);
+      res.status(500).json({ message: "Failed to save user settings" });
+    }
+  });
+
   // Dashboard stats
   app.get("/api/dashboard/stats", isAuthenticated, async (req: any, res) => {
     try {

@@ -221,3 +221,26 @@ Preferred communication style: Simple, everyday language (Spanish).
   - Sistema de colores limpios sin efectos de iluminación
   - Configuración por defecto: efectos neón y animaciones desactivados
 - **Status**: ✅ Completed - Sistema completo de configuración visual funcionando correctamente sin efectos de iluminación
+
+### User-Specific Settings Persistence (August 17, 2025)
+- **Database Integration**: Implementado sistema de configuraciones personalizadas por usuario
+  - **Nueva Tabla**: `user_settings` con campos: primaryColor, transparency, neonEffects, fontSize, animations
+  - **Relación**: Cada usuario tiene configuraciones únicas vinculadas por userId con cascade delete
+  - **Índice Único**: Asegurado que cada usuario tenga solo un registro de configuraciones
+- **API Endpoints**: Creados endpoints para gestión de configuraciones de usuario
+  - `GET /api/user/settings`: Obtiene configuraciones del usuario actual
+  - `POST /api/user/settings`: Guarda/actualiza configuraciones del usuario
+  - **Valores por Defecto**: Sistema devuelve configuraciones por defecto si el usuario no tiene configuraciones guardadas
+- **Frontend Integration**: Migrado de localStorage a base de datos
+  - **React Query**: Implementado caching y sincronización automática de configuraciones
+  - **Mutations**: Guardado y reseteo de configuraciones con feedback al usuario
+  - **Loading States**: Manejo de estados de carga durante operaciones de configuración
+- **User Experience**: 
+  - Configuraciones persisten entre sesiones por usuario individual
+  - Cada usuario puede personalizar su interfaz independientemente
+  - Cambios se aplican en tiempo real y se guardan en la base de datos
+- **Technical Implementation**:
+  - Drizzle ORM para operaciones type-safe en configuraciones
+  - upsertUserSettings function para crear/actualizar configuraciones
+  - Manejo de errores con toast notifications
+- **Status**: ✅ Completed - Sistema de configuraciones por usuario completamente funcional

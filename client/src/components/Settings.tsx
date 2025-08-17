@@ -8,6 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Save, RotateCcw, Palette, Monitor, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ThemeSettings {
   primaryColor: string;
@@ -27,6 +29,13 @@ const colorOptions = [
 
 export function Settings() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Fetch user settings from database
+  const { data: userSettings, isLoading } = useQuery({
+    queryKey: ["/api/user/settings"],
+  });
+
   const [settings, setSettings] = useState<ThemeSettings>({
     primaryColor: "green",
     transparency: 85,
@@ -35,13 +44,18 @@ export function Settings() {
     animations: false,
   });
 
-  // Load settings from localStorage
+  // Update local state when data is loaded
   useEffect(() => {
-    const savedSettings = localStorage.getItem("cyber-theme-settings");
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
+    if (userSettings && typeof userSettings === 'object') {
+      setSettings({
+        primaryColor: (userSettings as any).primaryColor || "green",
+        transparency: parseInt((userSettings as any).transparency) || 85,
+        neonEffects: (userSettings as any).neonEffects === "true",
+        fontSize: parseInt((userSettings as any).fontSize) || 14,
+        animations: (userSettings as any).animations === "true",
+      });
     }
-  }, []);
+  }, [userSettings]);
 
   // Apply theme changes to CSS variables
   useEffect(() => {
@@ -76,12 +90,39 @@ export function Settings() {
     root.classList.remove("animations-enabled");
   }, [settings]);
 
+  // Save settings mutation
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (settingsToSave: ThemeSettings) => {
+      const response = await fetch("/api/user/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(settingsToSave),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to save settings");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/settings"] });
+      toast({
+        title: "CONFIGURACIÓN GUARDADA",
+        description: "Los cambios se han aplicado exitosamente",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "ERROR AL GUARDAR",
+        description: "No se pudieron guardar las configuraciones",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSave = () => {
-    localStorage.setItem("cyber-theme-settings", JSON.stringify(settings));
-    toast({
-      title: "CONFIGURACIÓN GUARDADA",
-      description: "Los cambios se han aplicado exitosamente",
-    });
+    saveSettingsMutation.mutate(settings);
   };
 
   const handleReset = () => {
@@ -93,7 +134,7 @@ export function Settings() {
       animations: false,
     };
     setSettings(defaultSettings);
-    localStorage.removeItem("cyber-theme-settings");
+    saveSettingsMutation.mutate(defaultSettings);
     toast({
       title: "CONFIGURACIÓN RESTABLECIDA",
       description: "Se han restaurado los valores por defecto",

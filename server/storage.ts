@@ -1,10 +1,13 @@
 import {
   users,
   cyberCases,
+  userSettings,
   type User,
   type UpsertUser,
   type CyberCase,
   type InsertCyberCase,
+  type UserSettings,
+  type InsertUserSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, and, gte, lte, count, sql } from "drizzle-orm";
@@ -13,6 +16,10 @@ export interface IStorage {
   // User operations for Replit Auth
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+
+  // User settings operations
+  getUserSettings(userId: string): Promise<UserSettings | undefined>;
+  upsertUserSettings(userId: string, settings: Partial<InsertUserSettings>): Promise<UserSettings>;
 
   // Cyber case operations
   getCyberCases(params: {
@@ -56,6 +63,32 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId));
+    return settings;
+  }
+
+  async upsertUserSettings(userId: string, settingsData: Partial<InsertUserSettings>): Promise<UserSettings> {
+    const [settings] = await db
+      .insert(userSettings)
+      .values({
+        userId,
+        ...settingsData,
+      })
+      .onConflictDoUpdate({
+        target: userSettings.userId,
+        set: {
+          ...settingsData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return settings;
   }
 
   async getCyberCases(params: {

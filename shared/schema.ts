@@ -52,8 +52,23 @@ export const cyberCases = pgTable("cyber_cases", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// User settings table for personalization
+export const userSettings = pgTable("user_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  primaryColor: varchar("primary_color").notNull().default("green"),
+  transparency: varchar("transparency").notNull().default("85"),
+  neonEffects: varchar("neon_effects").notNull().default("false"),
+  fontSize: varchar("font_size").notNull().default("14"),
+  animations: varchar("animations").notNull().default("false"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type UserSettings = typeof userSettings.$inferSelect;
+export type InsertUserSettings = typeof userSettings.$inferInsert;
 
 export const insertCyberCaseSchema = createInsertSchema(cyberCases).omit({
   id: true,
