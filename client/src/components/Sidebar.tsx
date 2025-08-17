@@ -59,13 +59,13 @@ export function Sidebar({ isOpen, onClose, currentSection, onSectionChange }: Si
                   className={cn(
                     "w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors group font-mono",
                     isActive
-                      ? "bg-primary/20 text-primary neon-border"
+                      ? "bg-primary/20 text-primary-custom neon-border"
                       : "text-muted-foreground hover:bg-primary/10 hover:text-foreground"
                   )}
                 >
                   <Icon className={cn(
                     "w-5 h-5",
-                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                    isActive ? "text-primary-custom" : "text-muted-foreground group-hover:text-primary-custom"
                   )} />
                   <span className="ml-3">{item.name}</span>
                 </button>

@@ -48,21 +48,21 @@ const CRIME_TYPES = [
 
 const BADGE_COLORS = {
   crimeType: {
-    "Hacking": "badge-hacking",
-    "Phishing": "badge-phishing",
-    "Malware": "badge-malware",
-    "Ransomware": "badge-ransomware",
-    "Fraude cibernético": "badge-fraud",
-    "Robo de identidad": "badge-identity",
-    "Ciberacoso": "badge-harassment",
-    "Suplantación de identidad": "badge-impersonation",
+    "Hacking": "badge-danger",
+    "Phishing": "badge-warning", 
+    "Malware": "badge-danger",
+    "Ransomware": "badge-danger",
+    "Fraude cibernético": "badge-warning",
+    "Robo de identidad": "badge-primary",
+    "Ciberacoso": "badge-warning",
+    "Suplantación de identidad": "badge-primary",
   },
   status: {
-    "Pendiente": "badge-pending",
-    "En proceso": "badge-processing",
-    "Completado": "badge-completed",
-    "Sin respuesta": "badge-no-response",
-    "Rechazado": "badge-rejected",
+    "Pendiente": "badge-warning",
+    "En proceso": "badge-primary",
+    "Completado": "badge-success",
+    "Sin respuesta": "badge-warning",
+    "Rechazado": "badge-danger",
   }
 } as const;
 
@@ -212,7 +212,7 @@ export function DataManagementOptimized() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-3 text-primary" />
+              <Search className="w-4 h-4 absolute left-3 top-3 text-primary-custom" />
               <Input
                 data-testid="input-search"
                 placeholder="Buscar por expediente..."
@@ -294,7 +294,7 @@ export function DataManagementOptimized() {
                         {formatDate(caseItem.caseDate)}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm font-medium text-primary font-mono">
+                        <span className="text-sm font-medium text-primary-custom font-mono">
                           #{caseItem.expedientNumber}
                         </span>
                       </td>
@@ -311,7 +311,7 @@ export function DataManagementOptimized() {
                           {caseItem.investigationStatus}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-accent font-mono">
+                      <td className="px-6 py-4 text-sm font-medium text-accent-custom font-mono">
                         {formatCurrency(caseItem.stolenAmount)}
                       </td>
                       <td className="px-6 py-4">
@@ -371,7 +371,7 @@ export function DataManagementOptimized() {
                   <ChevronLeft className="w-4 h-4" />
                   ANTERIOR
                 </Button>
-                <span className="text-sm text-primary font-mono">
+                <span className="text-sm text-primary-custom font-mono">
                   [ {filters.page} / {totalPages} ]
                 </span>
                 <Button
@@ -394,7 +394,7 @@ export function DataManagementOptimized() {
       <CaseModal
         isOpen={modalOpen}
         onClose={closeModal}
-        editingCase={editCase}
+        editCase={editCase}
       />
     </div>
   );

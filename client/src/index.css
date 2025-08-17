@@ -111,16 +111,91 @@
 
   /* Custom hacker table styles - Dynamic colors */
   .hacker-table {
-    background: hsl(0 0% 4%);
+    background: hsl(var(--card));
     border: 1px solid hsl(var(--primary) / 0.3);
   }
   
   .hacker-table th {
-    background: hsl(0 0% 6%);
+    background: hsl(var(--muted));
     color: hsl(var(--primary));
     border-bottom: 1px solid hsl(var(--primary) / 0.3);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+
+  .hacker-table td {
+    color: hsl(var(--foreground));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .hacker-table tbody tr:hover {
+    background: hsl(var(--primary) / 0.1);
+  }
+
+  /* Global button styles - Dynamic colors */
+  .btn-primary {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border: 1px solid hsl(var(--primary));
+  }
+
+  .btn-primary:hover {
+    background: hsl(var(--primary) / 0.8);
+    border-color: hsl(var(--primary) / 0.8);
+  }
+
+  /* Global input styles - Dynamic colors */
+  .input-primary {
+    background: hsl(var(--input));
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+  }
+
+  .input-primary:focus {
+    border-color: hsl(var(--primary));
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
+  }
+
+  /* Global card styles - Dynamic colors */
+  .card-primary {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--primary) / 0.3);
+    color: hsl(var(--card-foreground));
+  }
+
+  /* Global text styles - Dynamic colors */
+  .text-primary-custom {
+    color: hsl(var(--primary)) !important;
+  }
+
+  .text-accent-custom {
+    color: hsl(var(--accent)) !important;
+  }
+
+  /* Global badge styles - Dynamic colors */
+  .badge-primary {
+    background: hsl(var(--primary) / 0.2);
+    color: hsl(var(--primary));
+    border: 1px solid hsl(var(--primary) / 0.3);
+  }
+
+  .badge-success {
+    background: hsl(120 100% 25% / 0.2);
+    color: hsl(120 100% 45%);
+    border: 1px solid hsl(120 100% 45% / 0.3);
+  }
+
+  .badge-warning {
+    background: hsl(45 100% 25% / 0.2);
+    color: hsl(45 100% 45%);
+    border: 1px solid hsl(45 100% 45% / 0.3);
+  }
+
+  .badge-danger {
+    background: hsl(0 100% 25% / 0.2);
+    color: hsl(0 100% 45%);
+    border: 1px solid hsl(0 100% 45% / 0.3);
   }
   
   .hacker-table tr:hover {
