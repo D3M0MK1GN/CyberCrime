@@ -23,6 +23,12 @@ interface User {
   isActive: "true" | "false";
   createdAt: string;
   lastLoginAt?: string;
+  currentSession?: {
+    ipAddress: string;
+    deviceInfo: string;
+    browser: string;
+    os: string;
+  };
 }
 
 interface UserSession {
@@ -457,6 +463,8 @@ export function UserAdministration() {
                       <TableHead className="font-mono">EMAIL</TableHead>
                       <TableHead className="font-mono">ROL</TableHead>
                       <TableHead className="font-mono">ESTADO</TableHead>
+                      <TableHead className="font-mono">DIRECCIÓN IP</TableHead>
+                      <TableHead className="font-mono">DISPOSITIVO</TableHead>
                       <TableHead className="font-mono">ÚLTIMO ACCESO</TableHead>
                       <TableHead className="font-mono">ACCIONES</TableHead>
                     </TableRow>
@@ -481,6 +489,15 @@ export function UserAdministration() {
                             )}
                             {user.isActive === "true" ? "Activo" : "Inactivo"}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {user.currentSession?.ipAddress || "No disponible"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono">
+                          {user.currentSession?.deviceInfo || "No disponible"}
                         </TableCell>
                         <TableCell className="font-mono">
                           {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : "Nunca"}
@@ -539,9 +556,7 @@ export function UserAdministration() {
                       <TableHead className="font-mono">USUARIO</TableHead>
                       <TableHead className="font-mono">DIRECCIÓN IP</TableHead>
                       <TableHead className="font-mono">DISPOSITIVO</TableHead>
-                      <TableHead className="font-mono">NAVEGADOR</TableHead>
                       <TableHead className="font-mono">SISTEMA</TableHead>
-                      <TableHead className="font-mono">UBICACIÓN</TableHead>
                       <TableHead className="font-mono">INICIO SESIÓN</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -558,9 +573,7 @@ export function UserAdministration() {
                           </div>
                         </TableCell>
                         <TableCell className="font-mono">{session.deviceInfo}</TableCell>
-                        <TableCell className="font-mono">{session.browser}</TableCell>
                         <TableCell className="font-mono">{session.os}</TableCell>
-                        <TableCell className="font-mono">{session.location}</TableCell>
                         <TableCell className="font-mono">
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />

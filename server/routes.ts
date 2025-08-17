@@ -392,9 +392,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/users', isAuthenticated, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
-      // Remove password from response
-      const safeUsers = users.map(({ password, ...user }) => user);
-      res.json(safeUsers);
+      // Get current session info for each user
+      const usersWithSessions = await Promise.all(
+        users.map(async (user) => {
+          const { password, ...safeUser } = user;
+          // Get the most recent active session for this user
+          const userSessions = await storage.getUserSessions(user.id);
+          const currentSession = userSessions.find(session => session.isActive === "true");
+          
+          return {
+            ...safeUser,
+            currentSession: currentSession ? {
+              ipAddress: currentSession.ipAddress,
+              deviceInfo: currentSession.deviceInfo,
+              browser: currentSession.browser,
+              os: currentSession.os
+            } : null
+          };
+        })
+      );
+      
+      res.json(usersWithSessions);
     } catch (error) {
       console.error('Error fetching users:', error);
       res.status(500).json({ message: 'Error al obtener usuarios' });
