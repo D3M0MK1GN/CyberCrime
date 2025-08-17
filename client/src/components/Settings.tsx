@@ -48,20 +48,21 @@ export function Settings() {
     const root = document.documentElement;
     
     // Color mappings - manteniendo los efectos originales
-    const colorMap: Record<string, { primary: string; primaryForeground: string; accent: string }> = {
-      green: { primary: "120 100% 45%", primaryForeground: "0 0% 0%", accent: "120 100% 50%" },
-      blue: { primary: "200 100% 45%", primaryForeground: "0 0% 0%", accent: "200 100% 50%" },
-      purple: { primary: "280 100% 45%", primaryForeground: "0 0% 0%", accent: "280 100% 50%" },
-      red: { primary: "0 100% 45%", primaryForeground: "0 0% 0%", accent: "0 100% 50%" },
-      orange: { primary: "30 100% 45%", primaryForeground: "0 0% 0%", accent: "30 100% 50%" },
+    const colorMap: Record<string, { primary: string; primaryForeground: string; accent: string; ring: string }> = {
+      green: { primary: "120 100% 45%", primaryForeground: "0 0% 0%", accent: "120 100% 50%", ring: "120 100% 45%" },
+      blue: { primary: "200 100% 45%", primaryForeground: "0 0% 0%", accent: "200 100% 50%", ring: "200 100% 45%" },
+      purple: { primary: "280 100% 45%", primaryForeground: "0 0% 0%", accent: "280 100% 50%", ring: "280 100% 45%" },
+      red: { primary: "0 100% 45%", primaryForeground: "0 0% 0%", accent: "0 100% 50%", ring: "0 100% 45%" },
+      orange: { primary: "30 100% 45%", primaryForeground: "0 0% 0%", accent: "30 100% 50%", ring: "30 100% 45%" },
     };
 
     const colors = colorMap[settings.primaryColor];
     
-    // Apply colors
-    root.style.setProperty("--primary", `hsl(${colors.primary})`);
-    root.style.setProperty("--primary-foreground", `hsl(${colors.primaryForeground})`);
-    root.style.setProperty("--accent", `hsl(${colors.accent})`);
+    // Apply colors using HSL values without hsl() wrapper
+    root.style.setProperty("--primary", colors.primary);
+    root.style.setProperty("--primary-foreground", colors.primaryForeground);
+    root.style.setProperty("--accent", colors.accent);
+    root.style.setProperty("--ring", colors.ring);
     
     // Apply transparency variables
     root.style.setProperty("--card-opacity", (settings.transparency / 100).toString());
@@ -135,9 +136,17 @@ export function Settings() {
               <Label className="text-sm font-medium font-mono">COLOR PRIMARIO</Label>
               <Select value={settings.primaryColor} onValueChange={(value) => updateSetting("primaryColor", value)}>
                 <SelectTrigger className="neon-border font-mono">
-                  <SelectValue />
+                  <SelectValue>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-4 h-4 rounded border border-border" 
+                        style={{ backgroundColor: colorOptions.find(opt => opt.value === settings.primaryColor)?.color || "#00ff00" }}
+                      />
+                      {colorOptions.find(opt => opt.value === settings.primaryColor)?.label || "VERDE MATRIX"}
+                    </div>
+                  </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="theme-modal">
                   {colorOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value} className="font-mono">
                       <div className="flex items-center gap-3">
