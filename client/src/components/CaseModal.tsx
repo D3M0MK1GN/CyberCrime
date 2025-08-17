@@ -81,7 +81,7 @@ export function CaseModal({ isOpen, onClose, onSubmit, initialData, isLoading = 
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto theme-modal">
         <DialogHeader>
           <DialogTitle className="matrix-text font-mono text-xl">
-            {initialData ? "[ EDITAR CASO ]" : "[ NUEVO CASO ]"}
+            {initialData ? "EDITAR CASO" : "NUEVO CASO"}
           </DialogTitle>
         </DialogHeader>
 
@@ -246,6 +246,7 @@ export function CaseModal({ isOpen, onClose, onSubmit, initialData, isLoading = 
                   <FormControl>
                     <Textarea
                       {...field}
+                      value={field.value || ""}
                       placeholder="Observaciones adicionales del caso..."
                       className="font-mono min-h-[100px]"
                     />

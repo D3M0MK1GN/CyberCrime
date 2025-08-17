@@ -213,7 +213,7 @@ export function Dashboard() {
   return (
     <div className="p-6 bg-background min-h-screen">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold matrix-text mb-2">[ DASHBOARD DE CONTROL ]</h1>
+        <h1 className="text-3xl font-bold matrix-text mb-2">DASHBOARD DE CONTROL</h1>
         <p className="text-muted-foreground font-mono">Sistema de gestión de delitos informáticos</p>
       </div>
 

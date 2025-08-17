@@ -96,7 +96,7 @@ export function Settings() {
   return (
     <div className="p-6 bg-background min-h-screen">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold matrix-text mb-2">[ CONFIGURACIÓN DEL SISTEMA ]</h1>
+        <h1 className="text-3xl font-bold matrix-text mb-2">CONFIGURACIÓN DEL SISTEMA</h1>
         <p className="text-muted-foreground font-mono">Personaliza la apariencia y comportamiento del sistema</p>
       </div>
 
@@ -106,7 +106,7 @@ export function Settings() {
           <CardHeader>
             <CardTitle className="matrix-text font-mono flex items-center gap-2">
               <Palette className="w-5 h-5" />
-              [ CONFIGURACIÓN VISUAL ]
+              CONFIGURACIÓN VISUAL
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -218,7 +218,7 @@ export function Settings() {
           <CardHeader>
             <CardTitle className="matrix-text font-mono flex items-center gap-2">
               <Monitor className="w-5 h-5" />
-              [ EFECTOS Y COMPORTAMIENTO ]
+              EFECTOS Y COMPORTAMIENTO
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -261,7 +261,7 @@ export function Settings() {
           <CardHeader>
             <CardTitle className="matrix-text font-mono flex items-center gap-2">
               <Shield className="w-5 h-5" />
-              [ INFORMACIÓN DEL SISTEMA ]
+              INFORMACIÓN DEL SISTEMA
             </CardTitle>
           </CardHeader>
           <CardContent>

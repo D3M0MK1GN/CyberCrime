@@ -139,7 +139,7 @@ export function ReportAdministration() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold matrix-text font-mono">[ ADMINISTRACIÓN DE PLANILLAS ]</h2>
+          <h2 className="text-3xl font-bold matrix-text font-mono">ADMINISTRACIÓN DE PLANILLAS</h2>
           <p className="text-muted-foreground font-mono">Gestión de reportes y planillas del sistema</p>
         </div>
         <Button onClick={handleGenerateReport} className="neon-border font-mono">

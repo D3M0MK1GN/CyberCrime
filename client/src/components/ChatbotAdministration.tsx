@@ -108,7 +108,7 @@ export function ChatbotAdministration() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold matrix-text font-mono">[ ADMINISTRACIÓN DE CHATBOT ]</h2>
+          <h2 className="text-3xl font-bold matrix-text font-mono">ADMINISTRACIÓN DE CHATBOT</h2>
           <p className="text-muted-foreground font-mono">Configuración y monitoreo del asistente virtual</p>
         </div>
         <Button onClick={handleSaveConfig} className="neon-border font-mono">
